@@ -133,8 +133,19 @@ class DrawingView: UIView {
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let endPoint = touch.location(in: self)
+        
         if var line = currentLine {
-            line.isClosed = true // Mark the line as closed
+            let tolerance: CGFloat = 10.0
+            
+            // Check if the last point is close to the first point
+            if let startPoint = line.points.first, distance(from: startPoint, to: endPoint) < tolerance {
+                line.isClosed = true
+            } else {
+                line.isClosed = false
+            }
+            
             lines.append(line)
             actions.append(.line(line))
             currentLine = nil
@@ -142,6 +153,11 @@ class DrawingView: UIView {
             onUndoAvailabilityChanged?(true)
             onRedoAvailabilityChanged?(false)
         }
+    }
+
+    // Helper method to calculate distance between two points
+    private func distance(from point1: CGPoint, to point2: CGPoint) -> CGFloat {
+        return hypot(point2.x - point1.x, point2.y - point1.y)
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
